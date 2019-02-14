@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <meta charset="utf-8">
+    <title>Login</title>
+  </head>
+  <body>
+
+    <div class="col-md-12 center">
+
+      <form id="formLogin" method="post">
+
+        <label for="email">Email:</label>
+        <input type="text" name="email" id="email" value="" placeholder="Email">
+
+        <label for="passw">Contraseña:</label>
+        <input type="password" name="passw" id="passw" value="" placeholder="Contraseña">
+
+        <input class="btn btn-success" type="submit" name="enviar" value="Entrar">
+
+      </form>
+
+    </div>
+
+  </body>
+  <script type="text/javascript">
+
+  $(document).ready(function(){
+
+    $("#formLogin").submit(function(event){
+      event.preventDefault();
+      $.ajax({
+        url:"controller/login.php",
+        method:"POST",
+        data:{ email: $("input[name=email]")[0].value, passw:$("input[name=passw]")[0].value},
+        dataType:"json",
+        success:function(rs){
+          console.log('devuelve',rs);
+          alert(rs.msj);
+          if (rs.session) window.location.href = "http://localhost/Netmex/controller/listado.php";
+          else window.location.href = "http://localhost/Netmex";
+        },
+      });
+    });
+
+  });
+
+  </script>
+</html>

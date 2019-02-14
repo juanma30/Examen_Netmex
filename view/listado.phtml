@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="http://localhost/Netmex/scr/js/libs.js"></script>
+    <meta charset="utf-8">
+    <title>Listado de tareas</title>
+  </head>
+  <body>
+
+    <div class="row conteiner" style="margin-top: 30px;">
+      <div class="col-md-4">
+        <div class="center">
+          <h2>Bienvenido: </h2>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <h3><?php echo $_SESSION['nombre']; ?></h3>
+      </div>
+
+      <div class="col-md-2">
+        <button type="button" class="btn btn-success" id="create" data-id="<?php echo $_SESSION['id']; ?>" name="createbttn">+ Agregar tarea</button>
+      </div>
+
+      <div class="col-md-12">
+        <h4>Filtrar por:</h4>
+      </div>
+      <div class="col-md-3">
+        <input type="radio" name="filter" id="tAll" value="all">Todas las tareas
+      </div>
+      <div class="col-md-3">
+        <input type="radio" name="filter" id="tOpen" value="open">Tareas abiertas
+      </div>
+      <div class="col-md-3">
+        <input type="radio" name="filter" id="tProcess"  value="process">Tareas en proceso
+      </div>
+      <div class="col-md-3">
+        <input type="radio" name="filter" id="tClose" value="close">Tareas cerradas
+      </div>
+
+      <div class="col-md-12" style="margin-top:20px;">
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Estatus</th>
+              <th>Usuario</th>
+              <th>Tarea</th>
+              <th>Descripción</th>
+              <th>Fecha</th>
+              <th>Opciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php
+              if($data){
+                $cat = array("open"=>"Abierta","process"=>"En proceso","close"=>"Cerrada");
+                foreach ($data as $k => $val) {
+                  ?>
+                    <tr>
+                      <td><?php echo $cat[$val['estatus']]?></td>
+                      <td><?php echo $val['usuario']?></td>
+                      <td><?php echo $val['titulo']?></td>
+                      <td><?php echo $val['descripcion']?></td>
+                      <td><?php echo $val['fecha']?></td>
+                      <td>
+                        <button type="button" class="btn btn-info editar" data-id="<?php echo $val['idTarea']; ?>" name="editar">Editar</button>
+                        <button type="button" class="btn btn-danger eliminar" data-id="<?php echo $val['idTarea']; ?>" name="elminar">Eliminar</button>
+                      </td>
+                    </tr>
+                  <?php
+                }
+              }else{
+                echo "<tr colspan='5'> No se encontraron resultados </tr>";
+              }
+            ?>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col-md-12">
+        <a href="http://localhost/Netmex/controller/close_session.php" class="btn btn-danger" id="cerrars" name="button">Cerrar sesión</a>
+      </div>
+    </div>
+
+  </body>
+  <script type="text/javascript">
+
+  $(document).ready(function(){
+    $("#create").click(function(event){
+      var win = uHtml.addModal('idModal','Crear nueva tarea',
+        ['<form id="formTarea" role="form" data-toggle="validator">',
+        ['text+','!titulo','Titulo:',''],
+        ['textarea+','!descripcion','Descripción:',''],
+        ['date+','!fecha','Fecha',''],
+        ['hidden+','idUser',<?php echo $_SESSION['id']; ?>],
+        ['hidden+','flag',"0"],
+        '</form>',],null,'Guardar');
+      $("#idModalBtnSave").click(function(e){
+        e.preventDefault();
+        $.ajax({
+          url:"cambios.php",
+          method:"POST",
+          data: $("#formTarea").serialize(),
+          dataType:"json",
+          success:function(rs){
+            // console.log('devuelve',rs);
+            alert(rs.msj);
+            window.location.href = "http://localhost/Netmex/controller/listado.php";
+          },
+        });
+      });
+    });
+
+
+    $(document).on('click','.editar',function(event){
+      event.preventDefault();
+      $idx = $(this).attr("data-id");
+      $.ajax({
+        url:"info.php",
+        method:"POST",
+        data: { idTarea : $idx },
+        dataType:"json",
+        success:function(rs){
+          // console.log(rs);
+          var win = uHtml.addModal('idModaledit','Modificar tarea',
+          ['<form id="formTareaedit" role="form" data-toggle="validator">',
+          ['select','estatus','Estatus',['open:Abierta','process:En proceso','close:Cerradas'],rs[0].estatus||'open'],
+          ['text+','!titulo','Titulo:',rs[0].titulo||''],
+          ['textarea+','!descripcion','Descripción:',rs[0].descripcion||''],
+          ['date+','!fecha','Fecha',rs[0].fecha||''],
+          ['hidden+','idTarea',$idx],
+          ['hidden+','flag',"1"],
+          '</form>',],null,'Guardar');
+          $("#idModaleditBtnSave").click(function(e){
+            e.preventDefault();
+            $.ajax({
+              url:"cambios.php",
+              method:"POST",
+              data: $("#formTareaedit").serialize(),
+              dataType:"json",
+              success:function(rs){
+                alert(rs.msj);
+                window.location.href = "http://localhost/Netmex/controller/listado.php";
+              },
+            });
+          });
+        },
+      });
+    });
+
+    $(document).on('click','.eliminar',function(event){
+      event.preventDefault();
+      $idx = $(this).attr("data-id");
+      // console.log("eliminar",$idx);
+      var win = uHtml.addModal('idModaldel','Eliminar tarea',
+        ['<form id="formTareadel" role="form" data-toggle="validator">',
+          ['alert','idAlert','warning','Se eliminara la tarea que se selecciono, para seguir de click en eliminar, de lo contrario cierre la ventana'],
+          ['hidden+','isDelete',1],
+          ['hidden+','idTarea',$idx],
+          ['hidden+','flag',"1"],
+        '</form>',],null,'Eliminar');
+        $("#idModaldelBtnSave").click(function(e){
+          e.preventDefault();
+          $.ajax({
+            url:"cambios.php",
+            method:"POST",
+            data: $("#formTareadel").serialize(),
+            dataType:"json",
+            success:function(rs){
+              alert(rs.msj);
+              window.location.href = "http://localhost/Netmex/controller/listado.php";
+            },
+          });
+        });
+
+    });
+
+    $("input[name=filter]").click(function(event){
+      event.preventDefault();
+      window.location.href = $(this).val() != 'all' ? "http://localhost/Netmex/controller/listado.php?filter="+$(this).val() : "http://localhost/Netmex/controller/listado.php";
+    });
+
+
+  });
+
+  </script>
+</html>
